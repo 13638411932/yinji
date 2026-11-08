@@ -1,5 +1,5 @@
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Volume2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Volume2 } from "lucide-react";
 import { useState } from "react";
 import { Ipa } from "@/components/ipa";
 import { MouthAnim, playPhonemeAlone, playWithMouth } from "@/components/mouth-anim";
@@ -10,6 +10,7 @@ import { VowelChart } from "@/components/vowel-chart";
 import { WriteCanvas } from "@/components/write-canvas";
 import { COURSE } from "@/lib/curriculum";
 import { getPhoneme, kindLabel } from "@/lib/phonemes";
+import { PHONEME_VIDEO_SOURCE, phonemeVideoUrl } from "@/lib/phoneme-video";
 import { cn } from "@/lib/utils";
 import { phonemeMastery, useProgress } from "@/lib/progress-store";
 
@@ -24,6 +25,7 @@ function PhonemePage() {
   const [spoken, setSpoken] = useState(false);
   const [playing, setPlaying] = useState(false);
   if (!phoneme) throw notFound();
+  const videoUrl = phonemeVideoUrl(phoneme.id);
   const mastery = phonemeMastery(skills[phoneme.id]);
   const day = COURSE.find((d) => d.phonemeIds.includes(phoneme.id));
 
@@ -64,6 +66,19 @@ function PhonemePage() {
               听例词 {phoneme.examples[0]!.word}
             </Button>
           </div>
+          {videoUrl ? (
+            <p className="mt-4">
+              <a
+                href={videoUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
+              >
+                <ExternalLink className="size-3.5" />
+                看视频讲解（{PHONEME_VIDEO_SOURCE}）
+              </a>
+            </p>
+          ) : null}
           {mastery > 0 ? (
             <p className="mt-3 text-xs tabular-nums text-faint">掌握 {mastery}%</p>
           ) : null}
