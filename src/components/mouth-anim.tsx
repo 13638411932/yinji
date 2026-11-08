@@ -350,7 +350,10 @@ export async function playPhonemeAlone(phoneme: Phoneme, setPlaying: (v: boolean
   setPlaying(true);
   const min = poseDuration(phoneme);
   try {
-    const played = await playPhonemeClip(phoneme.id);
+    // 孤立的音素录音都被拉长到 0.6 秒左右，短元音听起来会像长音。
+    // 短元音截到 0.38 秒，让长短在耳朵上真的分得开。
+    const maxMs = phoneme.vowel?.length === "short" ? 380 : undefined;
+    const played = await playPhonemeClip(phoneme.id, maxMs);
     if (!played) {
       await Promise.all([
         speakEnglish(phoneme.examples[0]!.word, 0.8),
