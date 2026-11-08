@@ -10,6 +10,7 @@ import { VowelChart } from "@/components/vowel-chart";
 import { WriteCanvas } from "@/components/write-canvas";
 import { COURSE } from "@/lib/curriculum";
 import { getPhoneme, kindLabel } from "@/lib/phonemes";
+import { cn } from "@/lib/utils";
 import { phonemeMastery, useProgress } from "@/lib/progress-store";
 
 export const Route = createFileRoute("/phoneme/$id")({
@@ -37,7 +38,14 @@ function PhonemePage() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl bg-bg-elevated px-4 py-8 text-center shadow-card">
-          <Ipa className="text-7xl leading-none">{phoneme.ipa}</Ipa>
+          <button
+            type="button"
+            aria-label={`播放 ${phoneme.nameZh} 的读音`}
+            onClick={() => void playPhonemeAlone(phoneme, setPlaying)}
+            className="mx-auto block rounded-xl px-3 py-1 transition active:scale-[0.97]"
+          >
+            <Ipa className={cn("text-7xl leading-none", playing && "text-primary")}>{phoneme.ipa}</Ipa>
+          </button>
           <p className="mt-4 text-sm text-muted">
             {kindLabel(phoneme.kind)} · {phoneme.groupZh}
           </p>

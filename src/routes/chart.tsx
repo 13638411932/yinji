@@ -1,6 +1,8 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Ipa } from "@/components/ipa";
+import { playPhonemeAlone } from "@/components/mouth-anim";
 import { VowelChart } from "@/components/vowel-chart";
 import { groupedPhonemes, phonemesOfKind, type PhonemeKind } from "@/lib/phonemes";
 import { isPhonemeMastered, phonemeMastery, useProgress } from "@/lib/progress-store";
@@ -17,13 +19,14 @@ const TABS: { id: PhonemeKind | "all"; label: string }[] = [
 
 function ChartPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
+  const [playingId, setPlayingId] = useState<string | null>(null);
   const skills = useProgress((s) => s.skills);
 
   return (
     <main className="px-4 pb-10 pt-6 sm:px-6">
       <p className="text-xs font-medium tracking-wide text-muted">Daniel Jones · 48</p>
       <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">音标表</h1>
-      <p className="mt-2 max-w-md text-sm text-muted">按中学 DJ 表排列。点进任意音标，看写法、口型和例词。</p>
+      <p className="mt-2 max-w-md text-sm text-muted">按中学 DJ 表排列。<strong className="font-medium text-fg">点音标直接听读音</strong>，点右上角箭头看写法、口型和例词。</p>
 
       <div className="mt-5 flex gap-1 rounded-lg bg-bg-subtle p-1">
         {TABS.map((t) => (
@@ -57,20 +60,31 @@ function ChartPage() {
                   const mastered = isPhonemeMastered(skills[p.id]);
                   const mastery = phonemeMastery(skills[p.id]);
                   return (
-                    <Link
-                      key={p.id}
-                      to="/phoneme/$id"
-                      params={{ id: p.id }}
-                      className={cn(
-                        "flex min-h-20 flex-col items-center justify-center rounded-lg bg-bg-elevated px-1 py-3 shadow-card",
-                        mastered && "ring-1 ring-primary/30",
-                      )}
-                    >
-                      <Ipa className="text-2xl leading-none">{p.ipa}</Ipa>
-                      <span className="mt-2 text-xs leading-none text-faint">
-                        {mastery > 0 ? `${mastery}%` : p.groupZh}
-                      </span>
-                    </Link>
+                    <div key={p.id} className="relative">
+                      <button
+                        type="button"
+                        aria-label={`播放 ${p.nameZh} 的读音`}
+                        onClick={() => void playPhonemeAlone(p, (v) => setPlayingId(v ? p.id : null))}
+                        className={cn(
+                          "flex min-h-20 w-full flex-col items-center justify-center rounded-lg bg-bg-elevated px-1 py-3 shadow-card transition active:scale-[0.97]",
+                          mastered && "ring-1 ring-primary/30",
+                          playingId === p.id && "ring-2 ring-primary",
+                        )}
+                      >
+                        <Ipa className="text-2xl leading-none">{p.ipa}</Ipa>
+                        <span className="mt-2 text-xs leading-none text-faint">
+                          {mastery > 0 ? `${mastery}%` : p.groupZh}
+                        </span>
+                      </button>
+                      <Link
+                        to="/phoneme/$id"
+                        params={{ id: p.id }}
+                        aria-label={`查看 ${p.nameZh} 的写法与口型`}
+                        className="absolute right-0.5 top-0.5 flex size-7 items-center justify-center rounded-md text-faint hover:text-fg"
+                      >
+                        <ChevronRight className="size-4" />
+                      </Link>
+                    </div>
                   );
                 })}
               </div>
