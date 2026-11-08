@@ -1,0 +1,21 @@
+[Unit]
+Description=音迹 DJ phonetics site
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/yinji
+Environment=NODE_ENV=production
+Environment=HOST=0.0.0.0
+Environment=PORT=3000
+Environment=NITRO_HOST=0.0.0.0
+Environment=NITRO_PORT=3000
+ExecStart=/usr/bin/node /opt/yinji/.output/server/index.mjs
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
