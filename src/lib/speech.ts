@@ -84,7 +84,7 @@ function stopAudioPlayback() {
 }
 
 /** 播放一个音频地址；false 表示文件缺失或播放被拒，调用方应退回语音合成。 */
-function playAudioUrl(url: string, maxMs?: number): Promise<boolean> {
+function playAudioUrl(url: string, rate = 1): Promise<boolean> {
   return new Promise((resolve) => {
     const audio = new Audio(url);
     currentAudio = audio;
@@ -100,13 +100,8 @@ function playAudioUrl(url: string, maxMs?: number): Promise<boolean> {
     audio.preload = "auto";
     audio.onended = () => finish(true);
     audio.onerror = () => finish(false);
-    if (maxMs !== undefined) {
-      window.setTimeout(() => {
-        if (settled) return;
-        audio.pause();
-        finish(true);
-      }, maxMs);
-    }
+    // 用播放速度改变长短，而不是突然截断——截断会有一声断音，听着很怪。
+    if (rate !== 1) audio.playbackRate = rate;
     const started = audio.play();
     if (started !== undefined) started.catch(() => finish(false));
   });
@@ -119,12 +114,12 @@ function playAudioUrl(url: string, maxMs?: number): Promise<boolean> {
  * 因为公开语料里没有这些音素的独立录音，而 TTS 又念不出孤立音素。
  * 返回 false 表示这个音标没有录音，调用方应退回朗读例词。
  */
-export async function playPhonemeClip(id: string, maxMs?: number): Promise<boolean> {
+export async function playPhonemeClip(id: string, rate = 1): Promise<boolean> {
   if (typeof window === "undefined") return false;
   const clips = PHONEME_CLIPS[id];
   if (clips === undefined || clips.length === 0) return false;
   for (const file of clips) {
-    const played = await playAudioUrl(`${AUDIO_BASE}/phoneme/${file}`, maxMs);
+    const played = await playAudioUrl(`${AUDIO_BASE}/phoneme/${file}`, rate);
     if (!played) return false;
   }
   return true;
