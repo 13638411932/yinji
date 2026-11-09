@@ -1,10 +1,11 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { ChevronRight, Pause, Play } from "lucide-react";
+import { useRef, useState } from "react";
 import { Ipa } from "@/components/ipa";
 import { playPhonemeAlone } from "@/components/mouth-anim";
+import { playPhonemeClip, stopSpeaking } from "@/lib/speech";
 import { VowelChart } from "@/components/vowel-chart";
-import { groupedPhonemes, phonemesOfKind, type PhonemeKind } from "@/lib/phonemes";
+import { PHONEMES, groupedPhonemes, phonemesOfKind, type PhonemeKind } from "@/lib/phonemes";
 import { isPhonemeMastered, phonemeMastery, useProgress } from "@/lib/progress-store";
 import { cn } from "@/lib/utils";
 
@@ -20,13 +21,49 @@ const TABS: { id: PhonemeKind | "all"; label: string }[] = [
 function ChartPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [sweepIndex, setSweepIndex] = useState<number | null>(null);
+  const sweepAbort = useRef(false);
   const skills = useProgress((s) => s.skills);
+
+  /** 连播 48 个音标：一条"录音带"，方便一次性听完挑错。 */
+  async function sweepAll() {
+    if (sweepIndex !== null) {
+      sweepAbort.current = true;
+      stopSpeaking();
+      setSweepIndex(null);
+      return;
+    }
+    sweepAbort.current = false;
+    const list = PHONEMES;
+    for (let i = 0; i < list.length; i += 1) {
+      if (sweepAbort.current) break;
+      const p = list[i]!;
+      setSweepIndex(i);
+      const rate = p.vowel?.length === "short" ? 1.35 : 1;
+      await playPhonemeClip(p.id, rate);
+      if (sweepAbort.current) break;
+      await new Promise((r) => window.setTimeout(r, 420));
+    }
+    sweepAbort.current = false;
+    setSweepIndex(null);
+  }
 
   return (
     <main className="px-4 pb-10 pt-6 sm:px-6">
       <p className="text-xs font-medium tracking-wide text-muted">Daniel Jones · 48</p>
       <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">音标表</h1>
       <p className="mt-2 max-w-md text-sm text-muted">按中学 DJ 表排列。<strong className="font-medium text-fg">点音标直接听读音</strong>，点右上角箭头看写法、口型和例词。</p>
+
+      <button
+        type="button"
+        onClick={() => void sweepAll()}
+        className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-fg"
+      >
+        {sweepIndex === null ? <Play className="size-4" /> : <Pause className="size-4" />}
+        {sweepIndex === null
+          ? "连播全部 48 个"
+          : `停止（${String(sweepIndex + 1)}/${String(PHONEMES.length)}）`}
+      </button>
 
       <div className="mt-5 flex gap-1 rounded-lg bg-bg-subtle p-1">
         {TABS.map((t) => (
